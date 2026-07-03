@@ -1,7 +1,9 @@
 ## Interface: 30300
-## Title: Smart|cffffffffBuff|r CoA by |cff00ff00Fyrhtu|r
+## Title: Smart|cffffffffBuff|r CoA
 ## Version: 3.5e-coa.3
-## Author: |cff20d2ffFyrhtu|r (based on Aeldra)
+## Author: |cff20d2ffFyrhtu|r
+## X-Maintainer: Fyrhtu
+## X-Original-Author: Aeldra (EU-Proudmoore)
 ## Notes: SmartBuff for Ascension Conquest of Azeroth (Area 52). Supports CoA custom classes, forms, and all 3.3.5 buffs. Use /sbm for options.
 ## Notes-deDE: Castet die wichtigsten Buffs auf dich selbst, Gruppe/Raid Mitglieder/Pets. Benutze  /sbm  um das Men� zu �ffnen
 ## Notes-frFR: Cast the most important buffs on you or party/raid members/pets. Use  /sbm  for options menu.
