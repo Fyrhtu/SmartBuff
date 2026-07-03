@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 -- SmartBuff
--- Created by Aeldra (EU-Proudmoore)
+-- Created by Fyrhtu (based on Aeldra, EU-Proudmoore)
 --
 -- Cast the most important buffs on you or party/raid members/pets. 
 -------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ GameTooltip:SetUnitDebuff("unit", [index] or ["name", "rank"][, "filter"]);
 ]]--
 
 
-SMARTBUFF_VERSION       = "v3.3e";
+SMARTBUFF_VERSION       = "v3.5e-coa.3";
 SMARTBUFF_TITLE         = "SmartBuff";
 SMARTBUFF_SUBTITLE      = "Supports you in cast buffs";
 SMARTBUFF_DESC          = "Cast the most important buffs on you or party/raid members/pets";
@@ -918,33 +918,33 @@ function SMARTBUFF_SetBuffs()
   cBuffIndex = { };
   numBuffs = 0;
   
-  for _, buff in ipairs(SMARTBUFF_BUFFLIST) do
+  for _, buff in ipairs(SMARTBUFF_BUFFLIST or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
   end  
 
-  for _, buff in ipairs(SMARTBUFF_WEAPON) do
+  for _, buff in ipairs(SMARTBUFF_WEAPON or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
   end
 
-  for _, buff in ipairs(SMARTBUFF_RACIAL) do
+  for _, buff in ipairs(SMARTBUFF_RACIAL or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
   end
       
-  for _, buff in ipairs(SMARTBUFF_TRACKING) do
+  for _, buff in ipairs(SMARTBUFF_TRACKING or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
   end
 
-  for _, buff in ipairs(SMARTBUFF_SCROLL) do
+  for _, buff in ipairs(SMARTBUFF_SCROLL or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
   end
 
-  for _, buff in ipairs(SMARTBUFF_FOOD) do
+  for _, buff in ipairs(SMARTBUFF_FOOD or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
   end
   
-  for _, buff in ipairs(SMARTBUFF_POTION) do
+  for _, buff in ipairs(SMARTBUFF_POTION or {}) do
     n = SMARTBUFF_SetBuff(buff, n);
-  end  
+  end
         
   cBuffsCombat = { };  
   SMARTBUFF_SetInCombatBuffs();
@@ -1452,20 +1452,7 @@ end
 --/script DEFAULT_CHAT_FRAME:AddMessage(GetShapeshiftForm(true));
 -- check if the player is shapeshifted
 function SMARTBUFF_IsShapeshifted()
-  if (sPlayerClass == "SHAMAN") then
-    if (GetShapeshiftForm(true) > 0) then
-      return true, "Ghost Wolf";
-    end
-  elseif (sPlayerClass == "DRUID") then
-    local i;
-    for i = 1, GetNumShapeshiftForms(), 1 do
-      local icon, name, active = GetShapeshiftFormInfo(i);
-      if (active == 1 and SMARTBUFF_GetSpellID(name) ~= nil and name ~= SMARTBUFF_DRUID_TREE) then
-        return true, name;
-      end
-    end  
-  end
-  return false, nil;
+  return SMARTBUFF_CoA_GetActiveShapeshift();
 end
 -- END SMARTBUFF_IsShapeshifted
 
@@ -1684,10 +1671,10 @@ function SMARTBUFF_Check(mode, force)
                       local ucf = UnitCreatureFamily(unit);
                       if (uct == nil) then uct = ""; end
                       if (ucf == nil) then ucf = ""; end                      
-                      if ((B[CS()][ct][buffnS][uc] and (uct == SMARTBUFF_HUMANOID or (uc == "DRUID" and (uct == SMARTBUFF_BEAST or uct == SMARTBUFF_ELEMENTAL))))
-                        or (B[CS()][ct][buffnS]["HPET"] and uct == SMARTBUFF_BEAST and uc ~= "DRUID")
-                        or (B[CS()][ct][buffnS]["DKPET"] and utc == SMARTBUFF_UNDEAD)
-                        or (B[CS()][ct][buffnS]["WPET"] and (uct == SMARTBUFF_DEMON or (uc ~= "DRUID" and uct == SMARTBUFF_ELEMENTAL)) and ucf ~= SMARTBUFF_DEMONTYPE)) then
+                      if ((SMARTBUFF_IsGroupBuffTarget(B[CS()][ct][buffnS], uc, uct) and (uct == SMARTBUFF_HUMANOID or (SMARTBUFF_IsDruidLikeClass(uc) and (uct == SMARTBUFF_BEAST or uct == SMARTBUFF_ELEMENTAL))))
+                        or (B[CS()][ct][buffnS]["HPET"] and uct == SMARTBUFF_BEAST and not SMARTBUFF_IsDruidLikeClass(uc))
+                        or (B[CS()][ct][buffnS]["DKPET"] and uct == SMARTBUFF_UNDEAD)
+                        or (B[CS()][ct][buffnS]["WPET"] and (uct == SMARTBUFF_DEMON or (not SMARTBUFF_IsDruidLikeClass(uc) and uct == SMARTBUFF_ELEMENTAL)) and ucf ~= SMARTBUFF_DEMONTYPE)) then
                         ret, idx, buffname = SMARTBUFF_CheckUnitBuffs(unit, cBuffs[i].BuffS, buffnG);
                       end
                     else
@@ -1959,9 +1946,12 @@ function SMARTBUFF_BuffUnit(unit, subgroup, mode, spell)
 			local unitCreatureTypeIsBeast = uct == SMARTBUFF_BEAST;
 			local unitCreatureTypeIsElemental = uct == SMARTBUFF_ELEMENTAL;
 			local unitCreatureTypeIsDemon = uct == SMARTBUFF_DEMON;
-			local unitCreatureTypeIsUndead = utc == SMARTBUFF_UNDEAD;
-			local unitClassIsDruid = uc == "DRUID";
+			local unitCreatureTypeIsUndead = uct == SMARTBUFF_UNDEAD;
+			local unitClassIsDruid = SMARTBUFF_IsDruidLikeClass(uc);
 			local somethingBuffs = bs[uc];
+			if (not somethingBuffs and SMARTBUFF_IsGroupBuffTarget) then
+			  somethingBuffs = SMARTBUFF_IsGroupBuffTarget(bs, uc, uct);
+			end
 			local hpet = bs["HPET"];
 			local dkpet = bs["DKPET"];
 			local wpet = bs["WPET"];
@@ -2014,7 +2004,12 @@ function SMARTBUFF_BuffUnit(unit, subgroup, mode, spell)
                 --if (iconTrack) then
                   --SMARTBUFF_AddMsgD("Track already enabled: " .. iconTrack);
                 else
-                  if (sPlayerClass ~= "DRUID" or ((not isShapeshifted and buffnS ~= SMARTBUFF_DRUID_TRACK) or (isShapeshifted and buffnS ~= SMARTBUFF_DRUID_TRACK) or (isShapeshifted and buffnS == SMARTBUFF_DRUID_TRACK and sShapename == SMARTBUFF_DRUID_CAT))) then
+                  if (not SMARTBUFF_IsPlayerDruidLike()
+                    or ((not isShapeshifted and buffnS ~= SMARTBUFF_DRUID_TRACK)
+                    or (isShapeshifted and buffnS ~= SMARTBUFF_DRUID_TRACK)
+                    or (isShapeshifted and buffnS == SMARTBUFF_DRUID_TRACK
+                      and (SMARTBUFF_IsFormNameMatch(sShapename, SMARTBUFF_DRUID_CAT)
+                        or SMARTBUFF_IsFormNameMatch(sShapename, SMARTBUFF_COA_CAT_FORM))))) then
                     buff = buffnS;
                   end
                 end
@@ -2201,24 +2196,8 @@ function SMARTBUFF_BuffUnit(unit, subgroup, mode, spell)
 
               -- check if shapeshifted and cancel buff if it is not possible to cast it
               if (buff and cBuffs[i].Type ~= SMARTBUFF_CONST_TRACK and cBuffs[i].Type ~= SMARTBUFF_CONST_FORCESELF) then
-                --isShapeshifted = true;
-                --sShapename = "Moonkingestalt";
-                if (not O.InShapeshift and isShapeshifted) then
-                  if (string.find(cBuffs[i].Exclude, sShapename)) then
-                    --SMARTBUFF_AddMsgD("Cast " .. buff .. " while shapeshifted");
-                  else
-                    if(cBuffs[i].Exclude == SMARTBUFF_DRUID_CAT) then
-                      buff = nil;
-                    end                  
-                    if (buff and mode ~= 1) then
-                      --sMsgWarning = SMARTBUFF_MSG_SHAPESHIFT .. ": " .. sShapename;
-                      buff = nil;
-                    end
-                  end
-                else
-                  if(cBuffs[i].Exclude == SMARTBUFF_DRUID_CAT) then
-                    buff = nil;
-                  end
+                if (not SMARTBUFF_CanCastBuffForForm(cBuffs[i].Exclude, isShapeshifted, sShapename, O.InShapeshift, mode)) then
+                  buff = nil;
                 end
               end
               
@@ -2593,13 +2572,13 @@ function SMARTBUFF_CheckUnitBuffs(unit, buffS, buffG, bIgnorePattern)
           isLinkedS, timeleft = SMARTBUFF_CheckLinkedBuff(buffS, buff, timeleft);
         end
         
-        if (buffS ~= nil and (buffS == buff or isLinkedS)) then
+        if (buffS ~= nil and (SMARTBUFF_BuffNamesMatch(buffS, buff) or isLinkedS)) then
           if (not isLinkedS) then
             SMARTBUFF_UpdateBuffDuration(buffS, duration);
           end
           return nil, index, buffS, timeleft, count;
         end
-        if (buffG ~= nil and (buffG == buff or isLinkedG)) then
+        if (buffG ~= nil and (SMARTBUFF_BuffNamesMatch(buffG, buff) or isLinkedG)) then
           return nil, index, buffG, timeleft, count;
         end
       end
@@ -2613,8 +2592,8 @@ function SMARTBUFF_CheckUnitBuffs(unit, buffS, buffG, bIgnorePattern)
 end
 
 function SMARTBUFF_CheckLinkedBuff(buffR, buff, tl)
-  -- Mage
-  if (sPlayerClass == "MAGE") then
+  -- Mage / CoA profiles
+  if (sPlayerClass == "MAGE" or SMARTBUFF_IsCoAProfile()) then
     if (((buffR == SMARTBUFF_AI or buffR == SMARTBUFF_DALARANI) and (buff == SMARTBUFF_AI or buff == SMARTBUFF_DALARANI or buff == SMARTBUFF_FELI)) 
      or ((buffR == SMARTBUFF_AB or buffR == SMARTBUFF_DALARANB) and (buff == SMARTBUFF_AB or buff == SMARTBUFF_DALARANB or buff == SMARTBUFF_FELI))) then
       if (buff == SMARTBUFF_KIRUSSOV) then
@@ -2628,16 +2607,16 @@ function SMARTBUFF_CheckLinkedBuff(buffR, buff, tl)
     end
   end
 
-  -- Hunter
-  if (sPlayerClass == "HUNTER") then
+  -- Hunter / CoA profiles
+  if (sPlayerClass == "HUNTER" or SMARTBUFF_IsCoAProfile()) then
     if (buffR == SMARTBUFF_TRUESHOTAURA and (buff == SMARTBUFF_TRUESHOTAURA or buff == SMARTBUFF_ABOMINATIONSMIGHT)) then
       --SMARTBUFF_AddMsgD("Linked buffs: "..buffR.." <-> "..buff..", "..tl);
       return true, tl;
     end
   end
   
-  -- Priest
-  if (sPlayerClass == "PRIEST") then
+  -- Priest / CoA profiles
+  if (sPlayerClass == "PRIEST" or SMARTBUFF_IsCoAProfile()) then
     if (((buffR == SMARTBUFF_DS) and (buff == SMARTBUFF_DS or buff == SMARTBUFF_FELI)) 
      or ((buffR == SMARTBUFF_POS) and (buff == SMARTBUFF_POS or buff == SMARTBUFF_FELI))) then
       if (tl == nil or tl <= 0) then
@@ -2648,23 +2627,34 @@ function SMARTBUFF_CheckLinkedBuff(buffR, buff, tl)
     end
   end
   
-  -- Druid TESTING ONLY
-  --[[
-  if (sPlayerClass == "DRUID") then
-    if (((buffR == SMARTBUFF_MOTW or buffR == SMARTBUFF_THORNS) and (buff == SMARTBUFF_MOTW or buff == SMARTBUFF_THORNS)) 
-     or ((buffR == SMARTBUFF_GOTW) and (buff == SMARTBUFF_GOTW or buff == SMARTBUFF_KIRUSSOV))) then
+  -- Druid / CoA druid-like
+  if (sPlayerClass == "DRUID" or SMARTBUFF_IsCoAProfile()) then
+    if (((buffR == SMARTBUFF_MOTW) and (buff == SMARTBUFF_MOTW or buff == SMARTBUFF_GOTW))
+     or ((buffR == SMARTBUFF_GOTW) and (buff == SMARTBUFF_GOTW or buff == SMARTBUFF_KIRUSSOV))
+     or ((buffR == SMARTBUFF_PWF) and (buff == SMARTBUFF_PWF or buff == SMARTBUFF_POF))
+     or ((buffR == SMARTBUFF_POF) and (buff == SMARTBUFF_POF or buff == SMARTBUFF_KIRUSSOV))
+     or ((buffR == SMARTBUFF_SP) and (buff == SMARTBUFF_SP or buff == SMARTBUFF_POSP))
+     or ((buffR == SMARTBUFF_DS) and (buff == SMARTBUFF_DS or buff == SMARTBUFF_POS))
+     or ((buffR == SMARTBUFF_AI) and (buff == SMARTBUFF_AI or buff == SMARTBUFF_AB))
+     or ((buffR == SMARTBUFF_AB) and (buff == SMARTBUFF_AB or buff == SMARTBUFF_KIRUSSOV))) then
       if (buff == SMARTBUFF_KIRUSSOV) then
         tl = 9999;
       end
       if (tl == nil or tl <= 0) then
-        tl = 300;
-      end      
-      SMARTBUFF_AddMsgD("Linked buffs: "..buffR.." <-> "..buff..", "..tl);
+        tl = 1800;
+      end
       return true, tl;
-    end  
+    end
   end
-  ]]--
   
+  -- Venomancer / venom weapon and toxin buffs
+  if (sPlayerClass == "VENOMANCER" or SMARTBUFF_IsCoAProfile()) then
+    local linked, newTl = SMARTBUFF_CoA_CheckLinkedVenomBuff(buffR, buff, tl);
+    if (linked) then
+      return true, newTl;
+    end
+  end
+
   return false, tl;  
 end
 
@@ -2682,8 +2672,7 @@ end
 function SMARTBUFF_CheckBuff(unit, buffName) 
   local buff, _, icon = UnitAura(unit, buffName, nil, "HELPFUL");
   if (icon and buff) then
-    --SMARTBUFF_AddMsgD(UnitName(unit) .. ": " .. i .. ". " .. buff, 0, 1, 0.5);
-    if (buff and buffName and buff == buffName) then
+    if (buff and buffName and SMARTBUFF_BuffNamesMatch(buffName, buff)) then
       return true;
     end
   end
@@ -3026,9 +3015,11 @@ function SMARTBUFF_Options_Init(self)
   sID = sRealmName .. ":" .. sPlayerName;
   --AutoSelfCast = GetCVar("autoSelfCast");
   
-  SMARTBUFF_PLAYERCLASS = "HERO";--sPlayerClass;
-  sPlayerClass = "HERO";
-  --DebugChatFrame:AddMessage("sPlayerClass"..sPlayerClass);
+  SMARTBUFF_PLAYERCLASS = SMARTBUFF_ResolvePlayerClass(sPlayerClass);
+  sPlayerClass = SMARTBUFF_PLAYERCLASS;
+  SMARTBUFF_CoA_InitFormSpells();
+  SMARTBUFF_CoA_InitBuffableForms();
+  SMARTBUFF_CoA_InitClassSpells();
   
   
   if (not SMARTBUFF_Buffs) then SMARTBUFF_Buffs = { }; end
@@ -3937,7 +3928,7 @@ function SMARTBUFF_SetCheckButtonBuffs(mode)
   if (sPlayerClass == "PALADIN") then
     --SmartBuffOptionsFrame_cbAdvancedGrpBuffCheck:Hide();
     --SmartBuffOptionsFrameGrpBuffSize:Hide();
-  elseif (sPlayerClass == "HUNTER" or sPlayerClass == "ROGUE" or sPlayerClass == "WARRIOR") then    
+  elseif (sPlayerClass == "HUNTER" or sPlayerClass == "ROGUE" or sPlayerClass == "WARRIOR" or sPlayerClass == "VENOMANCER") then
     SmartBuffOptionsFrame_cbAdvancedGrpBuffCheck:Hide();
     SmartBuffOptionsFrameGrpBuffSize:Hide();
     SmartBuffOptionsFrameBLDuration:Hide();
@@ -3946,7 +3937,8 @@ function SMARTBUFF_SetCheckButtonBuffs(mode)
     end
   end
   
-  if (sPlayerClass == "DRUID" or sPlayerClass == "SHAMAN") then
+  if (sPlayerClass == "DRUID" or sPlayerClass == "SHAMAN" or sPlayerClass == "HERO" or sPlayerClass == "VENOMANCER"
+    or (SMARTBUFF_IsCoAShapeshiftClass and SMARTBUFF_IsCoAShapeshiftClass(sPlayerClass))) then
     SmartBuffOptionsFrame_cbInShapeshift:Show();
   else
     SmartBuffOptionsFrame_cbInShapeshift:Hide();
