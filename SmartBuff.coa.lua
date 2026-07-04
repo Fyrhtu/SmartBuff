@@ -263,6 +263,10 @@ SMARTBUFF_COA_CLASS_BUFF_DEFS = {
     {names = {"Call of the Storm"},                          duration = 30,   buffType = SMARTBUFF_CONST_GROUP, exclude = "ROGUE;WARRIOR;DEATHKNIGHT;HPET;WPET;DKPET", selfNot = true},
     {names = {"Whirlwind Aegis"},                            duration = 30,   buffType = SMARTBUFF_CONST_SELF},
   },
+  CHRONOMANCER = {
+    {names = {"Temporal Resilience"},                        duration = 30,   buffType = SMARTBUFF_CONST_SELF},
+    {names = {"Nozdormu's Wisdom"},                          duration = 30,   buffType = SMARTBUFF_CONST_GROUP, exclude = "ROGUE;WARRIOR;DEATHKNIGHT;HPET;WPET;DKPET"},
+  },
 };
 
 function SMARTBUFF_RegisterBuffableForm(formName)
@@ -353,6 +357,8 @@ function SMARTBUFF_CoA_InitClassSpells()
   SMARTBUFF_NECROTICVENOM = SMARTBUFF_CoA_ResolveSpellByNames({"Necrotic Venom", "Crippling Venom"});
   SMARTBUFF_CALLOFTHESTORM = SMARTBUFF_CoA_ResolveSpellByNames({"Call of the Storm"});
   SMARTBUFF_WHIRLWINDAEGIS = SMARTBUFF_CoA_ResolveSpellByNames({"Whirlwind Aegis"});
+  SMARTBUFF_TEMPORALRESILIENCE = SMARTBUFF_CoA_ResolveSpellByNames({"Temporal Resilience"});
+  SMARTBUFF_NOZDORMUSWISDOM = SMARTBUFF_CoA_ResolveSpellByNames({"Nozdormu's Wisdom"});
 
   if (SMARTBUFF_FANGFORM) then
     SMARTBUFF_RegisterBuffableForm(SMARTBUFF_FANGFORM);

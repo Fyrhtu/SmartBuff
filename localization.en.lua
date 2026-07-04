@@ -33,6 +33,9 @@ SMARTBUFF_COA_VENOM_PATTERN = {"Blight", "Venom", "Toxin", "Envenom"};
 -- CoA Stormbringer
 SMARTBUFF_COA_STORM_PATTERN = {"Call of the Storm", "Whirlwind Aegis", "^Storm"};
 
+-- CoA Chronomancer
+SMARTBUFF_COA_CHRONO_PATTERN = {"Temporal Resilience", "Nozdormu's Wisdom", "Temporal", "Nozdormu"};
+
 -- Druid
 -- Priest
 -- Warrior

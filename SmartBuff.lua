@@ -41,7 +41,7 @@ GameTooltip:SetUnitDebuff("unit", [index] or ["name", "rank"][, "filter"]);
 ]]--
 
 
-SMARTBUFF_VERSION       = "v3.5e-coa.4";
+SMARTBUFF_VERSION       = "v3.5e-coa.5";
 SMARTBUFF_TITLE         = "SmartBuff";
 SMARTBUFF_SUBTITLE      = "Supports you in cast buffs";
 SMARTBUFF_DESC          = "Cast the most important buffs on you or party/raid members/pets";
