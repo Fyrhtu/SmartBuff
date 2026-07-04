@@ -267,6 +267,10 @@ SMARTBUFF_COA_CLASS_BUFF_DEFS = {
     {names = {"Temporal Resilience"},                        duration = 30,   buffType = SMARTBUFF_CONST_SELF},
     {names = {"Nozdormu's Wisdom"},                          duration = 30,   buffType = SMARTBUFF_CONST_GROUP, exclude = "ROGUE;WARRIOR;DEATHKNIGHT;HPET;WPET;DKPET"},
   },
+  PRIMALIST = {
+    {names = {"Grove Instinct"},                             duration = 30,   buffType = SMARTBUFF_CONST_SELF},
+    {names = {"Boon of the Turtle"},                         duration = 30,   buffType = SMARTBUFF_CONST_SELF},
+  },
 };
 
 function SMARTBUFF_RegisterBuffableForm(formName)
@@ -359,10 +363,58 @@ function SMARTBUFF_CoA_InitClassSpells()
   SMARTBUFF_WHIRLWINDAEGIS = SMARTBUFF_CoA_ResolveSpellByNames({"Whirlwind Aegis"});
   SMARTBUFF_TEMPORALRESILIENCE = SMARTBUFF_CoA_ResolveSpellByNames({"Temporal Resilience"});
   SMARTBUFF_NOZDORMUSWISDOM = SMARTBUFF_CoA_ResolveSpellByNames({"Nozdormu's Wisdom"});
+  SMARTBUFF_GROVEINSTINCT = SMARTBUFF_CoA_ResolveSpellByNames({"Grove Instinct"});
+  SMARTBUFF_BOONOFTURTLE = SMARTBUFF_CoA_ResolveSpellByNames({"Boon of the Turtle"});
 
   if (SMARTBUFF_FANGFORM) then
     SMARTBUFF_RegisterBuffableForm(SMARTBUFF_FANGFORM);
   end
+end
+
+function SMARTBUFF_CoA_IsBoonBuff(buffName)
+  if (buffName == nil) then
+    return false;
+  end
+  return string.find(string.lower(buffName), "boon of", 1, true) ~= nil;
+end
+
+function SMARTBUFF_CoA_CheckLinkedBoonBuff(buffR, buff, tl)
+  if (buffR == nil or buff == nil) then
+    return false, tl;
+  end
+  if (not SMARTBUFF_CoA_IsBoonBuff(buffR) or not SMARTBUFF_CoA_IsBoonBuff(buff)) then
+    return false, tl;
+  end
+  if (SMARTBUFF_BuffNamesMatch(buffR, buff)) then
+    return true, tl;
+  end
+  if (tl == nil or tl <= 0) then
+    tl = 1800;
+  end
+  return true, tl;
+end
+
+function SMARTBUFF_CoA_IsInstinctBuff(buffName)
+  if (buffName == nil) then
+    return false;
+  end
+  return string.find(string.lower(buffName), "instinct", 1, true) ~= nil;
+end
+
+function SMARTBUFF_CoA_CheckLinkedInstinctBuff(buffR, buff, tl)
+  if (buffR == nil or buff == nil) then
+    return false, tl;
+  end
+  if (not SMARTBUFF_CoA_IsInstinctBuff(buffR) or not SMARTBUFF_CoA_IsInstinctBuff(buff)) then
+    return false, tl;
+  end
+  if (SMARTBUFF_BuffNamesMatch(buffR, buff)) then
+    return true, tl;
+  end
+  if (tl == nil or tl <= 0) then
+    tl = 1800;
+  end
+  return true, tl;
 end
 
 function SMARTBUFF_CoA_IsVenomBuff(buffName)

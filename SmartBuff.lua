@@ -41,7 +41,7 @@ GameTooltip:SetUnitDebuff("unit", [index] or ["name", "rank"][, "filter"]);
 ]]--
 
 
-SMARTBUFF_VERSION       = "v3.5e-coa.5";
+SMARTBUFF_VERSION       = "v3.5e-coa.8";
 SMARTBUFF_TITLE         = "SmartBuff";
 SMARTBUFF_SUBTITLE      = "Supports you in cast buffs";
 SMARTBUFF_DESC          = "Cast the most important buffs on you or party/raid members/pets";
@@ -77,6 +77,7 @@ local isKeyDownChanged = false;
 local isAuraChanged = false;
 local isClearSplash = false;
 local isRebinding = false;
+local isRebindPending = false;
 local isParrot = false;
 local isSync = false;
 local isSyncReq = false;
@@ -342,6 +343,10 @@ function SMARTBUFF_OnEvent(self, event, arg1, arg2, arg3, arg4, arg5)
       SMARTBUFF_SyncBuffTimers();
       SMARTBUFF_Check(1, true);
     end
+
+    if (isRebindPending) then
+      SMARTBUFF_RebindKeys();
+    end
     
   elseif (event == "PLAYER_TALENT_UPDATE") then
     if(SmartBuffOptionsFrame:IsVisible()) then
@@ -559,6 +564,10 @@ function SMARTBUFF_Ticker(force)
       isAuraChanged = false;
       --SMARTBUFF_AddMsgD("Force check");
       SMARTBUFF_Check(1, true);
+    end
+
+    if (isRebindPending and not InCombatLockdown()) then
+      SMARTBUFF_RebindKeys();
     end
     
   end 
@@ -2658,6 +2667,18 @@ function SMARTBUFF_CheckLinkedBuff(buffR, buff, tl)
     end
   end
 
+  -- Primalist / mutually exclusive Instinct and Boon buffs
+  if (sPlayerClass == "PRIMALIST" or SMARTBUFF_IsCoAProfile()) then
+    local linked, newTl = SMARTBUFF_CoA_CheckLinkedInstinctBuff(buffR, buff, tl);
+    if (linked) then
+      return true, newTl;
+    end
+    linked, newTl = SMARTBUFF_CoA_CheckLinkedBoonBuff(buffR, buff, tl);
+    if (linked) then
+      return true, newTl;
+    end
+  end
+
   return false, tl;  
 end
 
@@ -3203,8 +3224,32 @@ end
 -- END SMARTBUFF_Options_Init
 
 
+function SMARTBUFF_SafeBindingCall(func, ...)
+  if (InCombatLockdown()) then
+    isRebindPending = true;
+    return false;
+  end
+  local ok = pcall(func, ...);
+  if (not ok) then
+    isRebindPending = true;
+  end
+  return ok;
+end
+
 function SMARTBUFF_RebindKeys()
   local i;
+  local bindingOwner = SmartBuff_KeyButton;
+
+  if (bindingOwner == nil) then
+    return;
+  end
+
+  if (InCombatLockdown()) then
+    isRebindPending = true;
+    return;
+  end
+
+  isRebindPending = false;
   isRebinding = true;
   for i = 1, GetNumBindings(), 1 do
     local s = "";
@@ -3226,11 +3271,11 @@ function SMARTBUFF_RebindKeys()
       --s = i .. " = " .. command;
       if (key1) then
         --s = s .. ", key1 = " .. key1 .. " rebound";
-        SetBindingClick(key1, "SmartBuff_KeyButton");
+        SMARTBUFF_SafeBindingCall(SetBindingClick, key1, "SmartBuff_KeyButton");
       end
       if (key2) then
         --s = s .. ", key2 = " .. key2 .. " rebound";
-        SetBindingClick(key2, "SmartBuff_KeyButton");
+        SMARTBUFF_SafeBindingCall(SetBindingClick, key2, "SmartBuff_KeyButton");
       end
       --SMARTBUFF_AddMsgD(s);
       break;
@@ -3239,12 +3284,12 @@ function SMARTBUFF_RebindKeys()
   
   if (O.ScrollWheelUp) then
     isKeyUpChanged = true;
-    SetOverrideBindingClick(SmartBuffFrame, false, "MOUSEWHEELUP", "SmartBuff_KeyButton", "MOUSEWHEELUP");
+    SMARTBUFF_SafeBindingCall(SetOverrideBindingClick, bindingOwner, false, "MOUSEWHEELUP", "SmartBuff_KeyButton", "MOUSEWHEELUP");
     --SMARTBUFF_AddMsgD("Set wheel up");
   else
     if (isKeyUpChanged) then
       isKeyUpChanged = false;
-      SetOverrideBinding(SmartBuffFrame, false, "MOUSEWHEELUP");
+      SMARTBUFF_SafeBindingCall(SetOverrideBinding, bindingOwner, false, "MOUSEWHEELUP");
       --SetBinding("MOUSEWHEELUP", O.OldWheelUp);      
       --SMARTBUFF_AddMsgD("Set old wheel up: " .. O.OldWheelUp);
     end
@@ -3252,12 +3297,12 @@ function SMARTBUFF_RebindKeys()
   
   if (O.ScrollWheelDown) then
     isKeyDownChanged = true;
-    SetOverrideBindingClick(SmartBuffFrame, false, "MOUSEWHEELDOWN", "SmartBuff_KeyButton", "MOUSEWHEELDOWN");
+    SMARTBUFF_SafeBindingCall(SetOverrideBindingClick, bindingOwner, false, "MOUSEWHEELDOWN", "SmartBuff_KeyButton", "MOUSEWHEELDOWN");
     --SMARTBUFF_AddMsgD("Set wheel down");
   else
     if (isKeyDownChanged) then
       isKeyDownChanged = false;
-      SetOverrideBinding(SmartBuffFrame, false, "MOUSEWHEELDOWN");
+      SMARTBUFF_SafeBindingCall(SetOverrideBinding, bindingOwner, false, "MOUSEWHEELDOWN");
       --SetBinding("MOUSEWHEELDOWN", O.OldWheelDown);
       --SMARTBUFF_AddMsgD("Set old wheel down: " .. O.OldWheelDown);
     end
@@ -3267,18 +3312,23 @@ end
 
 function SMARTBUFF_ResetBindings()
   if (not isRebinding) then
+    if (InCombatLockdown()) then
+      isRebindPending = true;
+      SMARTBUFF_AddMsgWarn("Binding reset deferred until combat ends.");
+      return;
+    end
     isRebinding = true;
     if (O.OldWheelUp == "SmartBuff_KeyButton") then
-      SetBinding("MOUSEWHEELUP", "CAMERAZOOMIN");
+      SMARTBUFF_SafeBindingCall(SetBinding, "MOUSEWHEELUP", "CAMERAZOOMIN");
     else
-      SetBinding("MOUSEWHEELUP", O.OldWheelUp);
+      SMARTBUFF_SafeBindingCall(SetBinding, "MOUSEWHEELUP", O.OldWheelUp);
     end
     if (O.OldWheelDown == "SmartBuff_KeyButton") then
-      SetBinding("MOUSEWHEELDOWN", "CAMERAZOOMOUT");
+      SMARTBUFF_SafeBindingCall(SetBinding, "MOUSEWHEELDOWN", "CAMERAZOOMOUT");
     else
-      SetBinding("MOUSEWHEELDOWN", O.OldWheelDown);
+      SMARTBUFF_SafeBindingCall(SetBinding, "MOUSEWHEELDOWN", O.OldWheelDown);
     end
-    SaveBindings(GetCurrentBindingSet());
+    SMARTBUFF_SafeBindingCall(SaveBindings, GetCurrentBindingSet());
     SMARTBUFF_RebindKeys();
   end
 end
