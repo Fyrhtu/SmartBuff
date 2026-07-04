@@ -41,7 +41,7 @@ GameTooltip:SetUnitDebuff("unit", [index] or ["name", "rank"][, "filter"]);
 ]]--
 
 
-SMARTBUFF_VERSION       = "v3.5e-coa.3";
+SMARTBUFF_VERSION       = "v3.5e-coa.4";
 SMARTBUFF_TITLE         = "SmartBuff";
 SMARTBUFF_SUBTITLE      = "Supports you in cast buffs";
 SMARTBUFF_DESC          = "Cast the most important buffs on you or party/raid members/pets";
@@ -1009,7 +1009,10 @@ function SMARTBUFF_SetBuff(buff, i)
         end
       end
     end
-  end  
+    if (buff[10] ~= nil) then
+      B[CS()][ct][name].SelfNot = buff[10];
+    end
+  end
   
   -- update to 1.10g
   if (B[CS()][ct][name].RBTime == nil) then

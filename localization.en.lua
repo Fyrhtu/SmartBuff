@@ -30,6 +30,9 @@ SMARTBUFF_DEATHKNIGHT_PATTERN = {"%a+ Presence$"};
 -- CoA Venomancer
 SMARTBUFF_COA_VENOM_PATTERN = {"Blight", "Venom", "Toxin", "Envenom"};
 
+-- CoA Stormbringer
+SMARTBUFF_COA_STORM_PATTERN = {"Call of the Storm", "Whirlwind Aegis", "^Storm"};
+
 -- Druid
 -- Priest
 -- Warrior

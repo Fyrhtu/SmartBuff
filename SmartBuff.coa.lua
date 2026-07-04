@@ -259,6 +259,10 @@ SMARTBUFF_COA_CLASS_BUFF_DEFS = {
     {names = {"Deadly Venom"},                               duration = 1,    buffType = SMARTBUFF_CONST_WEAPON},
     {names = {"Necrotic Venom", "Crippling Venom"},          duration = 1,    buffType = SMARTBUFF_CONST_WEAPON},
   },
+  STORMBRINGER = {
+    {names = {"Call of the Storm"},                          duration = 30,   buffType = SMARTBUFF_CONST_GROUP, exclude = "ROGUE;WARRIOR;DEATHKNIGHT;HPET;WPET;DKPET", selfNot = true},
+    {names = {"Whirlwind Aegis"},                            duration = 30,   buffType = SMARTBUFF_CONST_SELF},
+  },
 };
 
 function SMARTBUFF_RegisterBuffableForm(formName)
@@ -298,7 +302,27 @@ function SMARTBUFF_CoA_BuildBuffEntry(def)
     def.gduration,
     def.glevels,
     def.reagents,
+    def.selfNot,
   };
+end
+
+function SMARTBUFF_CoA_MergePatterns(basePatterns, extraPatterns)
+  local merged = {};
+  local pat;
+  if (basePatterns ~= nil) then
+    for _, pat in ipairs(basePatterns) do
+      table.insert(merged, pat);
+    end
+  end
+  if (extraPatterns ~= nil) then
+    for _, pat in ipairs(extraPatterns) do
+      table.insert(merged, pat);
+    end
+  end
+  if (table.getn(merged) == 0) then
+    return nil;
+  end
+  return merged;
 end
 
 function SMARTBUFF_CoA_AppendClassBuffs(buffList, classToken)
@@ -327,6 +351,8 @@ function SMARTBUFF_CoA_InitClassSpells()
   SMARTBUFF_FANGFORM     = SMARTBUFF_CoA_ResolveSpellByNames({"Fang Form"});
   SMARTBUFF_DEADLYVENOM  = SMARTBUFF_CoA_ResolveSpellByNames({"Deadly Venom"});
   SMARTBUFF_NECROTICVENOM = SMARTBUFF_CoA_ResolveSpellByNames({"Necrotic Venom", "Crippling Venom"});
+  SMARTBUFF_CALLOFTHESTORM = SMARTBUFF_CoA_ResolveSpellByNames({"Call of the Storm"});
+  SMARTBUFF_WHIRLWINDAEGIS = SMARTBUFF_CoA_ResolveSpellByNames({"Whirlwind Aegis"});
 
   if (SMARTBUFF_FANGFORM) then
     SMARTBUFF_RegisterBuffableForm(SMARTBUFF_FANGFORM);
