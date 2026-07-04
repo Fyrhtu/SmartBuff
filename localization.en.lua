@@ -40,6 +40,9 @@ SMARTBUFF_COA_CHRONO_PATTERN = {"Temporal Resilience", "Nozdormu's Wisdom", "Tem
 SMARTBUFF_COA_INSTINCT_PATTERN = {"Instinct"};
 SMARTBUFF_COA_BOON_PATTERN = {"Boon of"};
 
+-- CoA Tinker
+SMARTBUFF_COA_TINKER_PATTERN = {"Power Module", "Magic Augmentation", "Module", "Augmentation"};
+
 -- Druid
 -- Priest
 -- Warrior

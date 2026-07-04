@@ -271,6 +271,10 @@ SMARTBUFF_COA_CLASS_BUFF_DEFS = {
     {names = {"Grove Instinct"},                             duration = 30,   buffType = SMARTBUFF_CONST_SELF},
     {names = {"Boon of the Turtle"},                         duration = 30,   buffType = SMARTBUFF_CONST_SELF},
   },
+  TINKER = {
+    {names = {"Power Module"},                               duration = 30,   buffType = SMARTBUFF_CONST_SELF},
+    {names = {"Magic Augmentation"},                         duration = 60,   buffType = SMARTBUFF_CONST_WEAPON},
+  },
 };
 
 function SMARTBUFF_RegisterBuffableForm(formName)
@@ -365,6 +369,8 @@ function SMARTBUFF_CoA_InitClassSpells()
   SMARTBUFF_NOZDORMUSWISDOM = SMARTBUFF_CoA_ResolveSpellByNames({"Nozdormu's Wisdom"});
   SMARTBUFF_GROVEINSTINCT = SMARTBUFF_CoA_ResolveSpellByNames({"Grove Instinct"});
   SMARTBUFF_BOONOFTURTLE = SMARTBUFF_CoA_ResolveSpellByNames({"Boon of the Turtle"});
+  SMARTBUFF_POWERMODULE = SMARTBUFF_CoA_ResolveSpellByNames({"Power Module"});
+  SMARTBUFF_MAGICAUGMENTATION = SMARTBUFF_CoA_ResolveSpellByNames({"Magic Augmentation"});
 
   if (SMARTBUFF_FANGFORM) then
     SMARTBUFF_RegisterBuffableForm(SMARTBUFF_FANGFORM);
